@@ -1,0 +1,17 @@
+# أسرار
+.env
+.env.*
+!.env.example
+
+# ناتج وتبعيات
+node_modules/
+work/
+out/
+
+# لقطات لوحة الإدارة من موقع فعلي: محلية فقط (أزل السطر لرفعها)
+assets/screens/admin/
+
+# نظام
+.DS_Store
+Thumbs.db
+*.log

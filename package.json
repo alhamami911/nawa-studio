@@ -1,0 +1,23 @@
+{
+  "name": "nawa-tutorial-builder",
+  "version": "1.0.0",
+  "description": "إنتاج فيديوهات تعليمية عربية لمنصة نوى (تسجيل + تكبير سينمائي + صوت + موسيقى + هوية)",
+  "scripts": {
+    "brand": "node src/fetch-brand.mjs",
+    "music": "node src/make-music.mjs",
+    "screens": "node src/screenshots.mjs",
+    "pdf": "node src/make-pdf.mjs",
+    "produce": "node src/produce.mjs",
+    "dashboard": "node src/dashboard.mjs",
+    "share": "node src/share.mjs"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.64.1"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
