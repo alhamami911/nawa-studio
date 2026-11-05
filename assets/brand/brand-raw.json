@@ -1,0 +1,53 @@
+{
+ "imgs": [
+  {
+   "src": "https://nawamusic.com/nawa-logo.png",
+   "alt": "Nawa",
+   "w": 760
+  }
+ ],
+ "links": [
+  {
+   "rel": "icon",
+   "href": "https://nawamusic.com/favicon.ico",
+   "sizes": "any"
+  },
+  {
+   "rel": "icon",
+   "href": "https://nawamusic.com/favicon.png",
+   "sizes": "32x32"
+  },
+  {
+   "rel": "icon",
+   "href": "https://nawamusic.com/favicon-16x16.png",
+   "sizes": "16x16"
+  },
+  {
+   "rel": "apple-touch-icon",
+   "href": "https://nawamusic.com/apple-touch-icon.png",
+   "sizes": "180x180"
+  },
+  {
+   "rel": "manifest",
+   "href": "https://nawamusic.com/site.webmanifest",
+   "sizes": ""
+  }
+ ],
+ "og": "https://nawamusic.com/og-image.png",
+ "vars": {
+  "--primary": "22.8 96% 39%",
+  "--background": "252 45% 98%",
+  "--foreground": "29 32% 15%",
+  "--accent": "27 100% 88%",
+  "--secondary": "27 100% 95%",
+  "--muted": "27 100% 95%",
+  "--border": "26 60% 82%",
+  "--ring": "22.8 96% 39%"
+ },
+ "font": "\"IBM Plex Sans Arabic\", Inter, system-ui, sans-serif",
+ "bodyBg": "rgb(249, 248, 252)",
+ "btn": [
+  "rgb(195, 77, 4)",
+  "rgba(0, 0, 0, 0.3)"
+ ]
+}
