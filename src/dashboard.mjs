@@ -24,6 +24,8 @@ const ADMIN_USER = process.env.DASHBOARD_ADMIN_USER ?? "admin";
 // التحكم عن بعد لا يُفتح بكلمة مرور ضعيفة (أقل من 10 أحرف) إلا بتصريح صريح DASHBOARD_ALLOW_WEAK=1
 const REMOTE_CONTROL = process.env.DASHBOARD_ALLOW_WEAK === "1" || (process.env.DASHBOARD_PASSWORD ?? "").length >= 10; // السماح بتشغيل الإنتاج من بعيد (افتراضيًا: عرض فقط)
 const sessions = new Map(), fails = new Map();
+const prune = () => { const now = Date.now(); for (const [k, e] of sessions) if (e < now) sessions.delete(k); for (const [k, f] of fails) if (f.until < now) fails.delete(k); if (sessions.size > 200) sessions.clear(); if (fails.size > 2000) fails.clear(); };
+setInterval(prune, 600_000).unref();
 const dg = x => createHash("sha256").update(x).digest();
 const same = (a, b) => timingSafeEqual(dg(a), dg(b));
 const isRemote = req => !!(req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.headers["cf-ray"]) || !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host ?? "");
@@ -50,6 +52,13 @@ function start(ep, { remix, voice }) {
 const tail = (file, n = 40) => { try { return readFileSync(file, "utf8").split(/\r?\n/).slice(-n).join("\n"); } catch { return ""; } };
 
 // ---- الحالة
+const durCache = new Map(); // path -> { mtime, sec }
+function duration(mp4) {
+  const m = statSync(mp4).mtimeMs, c = durCache.get(mp4);
+  if (c && c.mtime === m) return c.sec;
+  const r = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4], { encoding: "utf8" });
+  const sec = parseFloat(r.stdout) || undefined; durCache.set(mp4, { mtime: m, sec }); return sec;
+}
 async function episodeFiles() {
   const res = {};
   for (const f of readdirSync("src/episodes").filter(x => x.endsWith(".mjs"))) {
@@ -58,7 +67,7 @@ async function episodeFiles() {
       const full = resolve("src/episodes", f);
       const m = await import(pathToFileURL(full).href + "?t=" + statSync(full).mtimeMs);
       const mp4 = `out/nawa-${id}.mp4`, srt = `out/nawa-${id}.srt`, meta = `work/${id}/meta.json`;
-      let total; try { const r = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4], { encoding: "utf8" }); total = parseFloat(r.stdout) || undefined; } catch {}
+      let total; try { total = existsSync(mp4) ? duration(mp4) : undefined; } catch {}
       res[id] = {
         id, title: m.meta?.title, goals: m.meta?.goals ?? [],
         steps: m.steps.map(s => ({ id: s.id, card: s.card, speech: s.speech })),
@@ -97,7 +106,7 @@ async function state() {
 
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
-  const send = (code, body, type = "application/json; charset=utf-8") => { res.writeHead(code, { "content-type": type, "cache-control": "no-store" }); res.end(body); };
+  const send = (code, body, type = "application/json; charset=utf-8") => { res.writeHead(code, { "content-type": type, "cache-control": "no-store", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "referrer-policy": "no-referrer" }); res.end(body); };
   try {
     const remote = isRemote(req);
     if (remote) {

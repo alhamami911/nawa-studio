@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Syntax check
+        run: npm run check
+      - name: Forbidden files guard
+        run: |
+          bad=$(git ls-files | grep -E '(^|/)\.env$|^work/|^out/|^assets/screens/admin/|\.(webm|key|pem)$' || true)
+          if [ -n "$bad" ]; then echo "Forbidden files tracked:"; echo "$bad"; exit 1; fi
+      - name: Secret patterns guard
+        run: |
+          if git grep -I -n -E 'xi-api-key"?\s*[:=]\s*"?[A-Za-z0-9_-]{20,}|sk_[a-f0-9]{30,}' -- . ':!package-lock.json'; then echo "Possible secret committed"; exit 1; fi

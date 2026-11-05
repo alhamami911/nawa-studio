@@ -9,7 +9,8 @@
     "pdf": "node src/make-pdf.mjs",
     "produce": "node src/produce.mjs",
     "dashboard": "node src/dashboard.mjs",
-    "share": "node src/share.mjs"
+    "share": "node src/share.mjs",
+    "check": "node scripts/check.mjs"
   },
   "license": "UNLICENSED",
   "type": "module",
