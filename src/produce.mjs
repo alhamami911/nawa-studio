@@ -3,7 +3,7 @@
 // الفكرة: التسجيل بدقة 2560×1440 (زوم صفحة 1.333 فتبقى المقاسات كما في 1920×1080)،
 // والزوم يُنفَّذ في المونتاج ككاميرا سلسة (منحنى تسارع) فيبقى حادًّا وغير متقطع.
 import { chromium } from "playwright";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
@@ -143,6 +143,7 @@ else {
   const tEnd = rel();
   await ctx.close(); await browser.close();
   webm = newest(rec);
+  for (const f of readdirSync(rec)) if (f.endsWith(".webm") && f !== webm) unlinkSync(`${rec}/${f}`); // تسجيلات قديمة تتراكم (مئات الميغابايت): نُبقي الأحدث فقط
   vtrim = (tBase - tVideo0) / 1000 - 0.1;
   total = tEnd + 0.1;
   writeFileSync(`${work}/meta.json`, JSON.stringify({ webm, vtrim, total, timeline, cam }));
@@ -163,7 +164,7 @@ const chunks = [];
       const start = t.t + 0.15 + (t.dur - 0.15) * acc / totalCh; acc += s.length;
       const end = k === merged.length - 1 ? t.t + t.dur + 0.5 : t.t + 0.15 + (t.dur - 0.15) * acc / totalCh;
       const file = `${work}/cap/${t.id}-${k}-${createHash("md5").update(s).digest("hex").slice(0, 6)}.png`;
-      await pg.evaluate(([s, n, T]) => { document.body.innerHTML = `<div id="w" style="display:inline-block;padding:26px 40px 30px"><div id="c" style="display:block;position:relative;max-width:1560px;background:rgba(52,38,22,.95);color:#fff;border-radius:22px;padding:22px 40px 26px;font:600 36px/1.7 'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;direction:rtl;text-align:center;border:2px solid rgba(255,138,31,.6)"><span style="position:absolute;top:-18px;right:26px;background:#c34d04;border-radius:999px;font:700 18px 'IBM Plex Sans Arabic','Segoe UI';padding:4px 18px">${n} من ${T}</span>${s}</div></div>`; }, [s, t.n, t.T]);
+      await pg.evaluate(([s, n, T]) => { document.body.innerHTML = `<div id="w" style="display:inline-block;padding:26px 40px 30px"><div id="c" style="display:block;position:relative;max-width:1560px;background:rgba(52,38,22,.95);color:#fff;border-radius:22px;padding:22px 40px 26px;font:600 36px/1.7 'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;direction:rtl;text-align:center;border:2px solid rgba(255,138,31,.6)"><span style="position:absolute;top:-18px;right:26px;background:#c34d04;border-radius:999px;font:700 18px 'IBM Plex Sans Arabic','Segoe UI';padding:4px 18px">${n} من ${T}</span>${s.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div></div>`; }, [s, t.n, t.T]);
       await pg.locator("#w").screenshot({ path: file, omitBackground: true });
       chunks.push({ file, start: q(start), end: q(end) });
     }
@@ -229,5 +230,5 @@ run("ffmpeg", ["-loglevel", "error", "-y", ...inputs, "-/filter_complex", `${wor
   "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", "-r", String(FPS), "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", outMp4]);
 // ترجمة SRT
 const ts = x => { const ms = Math.round(x * 1000), pad = (v, l = 2) => String(v).padStart(l, "0"); return `${pad(Math.floor(ms / 3600000))}:${pad(Math.floor(ms / 60000) % 60)}:${pad(Math.floor(ms / 1000) % 60)},${pad(ms % 1000, 3)}`; };
-writeFileSync(outMp4.replace(/.mp4$/, ".srt"), timeline.filter(t => !t.card).map((t, i) => `${i + 1}\n${ts(t.t + 0.1)} --> ${ts(t.t + 0.1 + t.dur)}\n${t.text}\n`).join("\n"));
+writeFileSync(outMp4.replace(/\.mp4$/, ".srt"), timeline.filter(t => !t.card).map((t, i) => `${i + 1}\n${ts(t.t + 0.1)} --> ${ts(t.t + 0.1 + t.dur)}\n${t.text}\n`).join("\n"));
 console.log("done", outMp4, total.toFixed(1) + "s", `(${K} camera segments, ${chunks.length} captions)`);

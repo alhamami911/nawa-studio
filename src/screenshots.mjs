@@ -1,7 +1,7 @@
 // يصوّر كل صفحات منصة نوى (بدون الصفحات التي فيها بيانات أشخاص حقيقيين) إلى assets/screens/
 import { chromium } from "playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-const env = Object.fromEntries(readFileSync(".env", "utf8").split(/\r?\n/).filter(l => /^[A-Z_]+=/.test(l)).map(l => [l.split("=")[0], l.slice(l.indexOf("=") + 1).trim()]));
+process.loadEnvFile(); const env = process.env;
 const BASE = new URL(env.NAWA_BASE_URL).origin;
 const out = "assets/screens"; mkdirSync(out, { recursive: true });
 const b = await chromium.launch();
