@@ -1,7 +1,7 @@
 // لوحة إنتاج نوى: npm run dashboard  ثم افتح http://127.0.0.1:4174
 // خادم محلي بلا مكتبات (على نفس فكرة لوحة JAWAB Studio). الحالة من ملفات المشروع نفسها: data/series.json وsrc/episodes وout وwork.
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
@@ -13,7 +13,7 @@ const PORT = Number(process.env.DASHBOARD_PORT ?? 4174);
 const HOST = "127.0.0.1"; // هذا الجهاز فقط
 const ROOTS = ["out", "assets", "work/jobs"].map(d => resolve(d) + sep);
 const MIME = { ".mp4": "video/mp4", ".mp3": "audio/mpeg", ".png": "image/png", ".ico": "image/x-icon", ".srt": "text/plain; charset=utf-8", ".md": "text/plain; charset=utf-8", ".log": "text/plain; charset=utf-8", ".json": "application/json" };
-const VOICES = ["ar-SA-HamedNeural", "ar-EG-SalmaNeural", "ar-SA-ZariyahNeural"];
+const VOICES = ["eleven", "ar-SA-HamedNeural"]; // أصوات ذكورية فقط: ElevenLabs (Abu Fahad) والاحتياطي المجاني
 mkdirSync("work/jobs", { recursive: true });
 
 // ---- الدخول عن بعد (Cloudflare Tunnel وغيره): الطلب القادم عبر وسيط يتطلب كلمة مرور DASHBOARD_PASSWORD دائمًا.
@@ -58,7 +58,7 @@ async function episodeFiles() {
       const full = resolve("src/episodes", f);
       const m = await import(pathToFileURL(full).href + "?t=" + statSync(full).mtimeMs);
       const mp4 = `out/nawa-${id}.mp4`, srt = `out/nawa-${id}.srt`, meta = `work/${id}/meta.json`;
-      let total; try { total = JSON.parse(readFileSync(meta, "utf8")).total; } catch {}
+      let total; try { const r = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4], { encoding: "utf8" }); total = parseFloat(r.stdout) || undefined; } catch {}
       res[id] = {
         id, title: m.meta?.title, goals: m.meta?.goals ?? [],
         steps: m.steps.map(s => ({ id: s.id, card: s.card, speech: s.speech })),
