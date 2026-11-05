@@ -44,7 +44,7 @@ select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);
 <div class="modal" id="vm" onclick="if(event.target===this)closeM()"></div>
 <div id="toast"></div>
 <script>
-let S=null,voice='ar-SA-HamedNeural',openEp=null;
+let S=null,voice='eleven',openEp=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const AR={Completed:'مكتملة',Scripted:'سيناريو جاهز',Planned:'مخططة',Running:'قيد الإنتاج',Failed:'فشلت'};

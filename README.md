@@ -6,7 +6,7 @@
 ```
 node src/produce.mjs 01-platform-tour            # تسجيل + صوت + موسيقى + هوية + ترجمة
 node src/produce.mjs 01-platform-tour --remix    # إعادة المونتاج فقط من آخر تسجيل
-node src/produce.mjs 01-platform-tour --voice=ar-EG-SalmaNeural
+node src/produce.mjs 01-platform-tour --voice=ar-SA-HamedNeural   # الصوت المجاني (ذكر) بدل ElevenLabs
 ```
 المخرجات في `out/`: ملف mp4 وملف ترجمة srt.
 
@@ -56,3 +56,6 @@ copy .env.example .env        # ثم املأ NAWA_BASE_URL وNAWA_USER وNAWA_P
 - الصوت المجاني من Microsoft Edge TTS (يحتاج إنترنت). التبديل إلى ElevenLabs لاحقًا يكون في مرحلة الصوت داخل `produce.mjs`.
 - لا تُرفع ملفات `.env`، ولا مجلدا `out/` و`work/` (الفيديوهات تُنشر من خارج المستودع).
 - لقطات لوحة الإدارة (`assets/screens/admin/`) محلية فقط لأنها من موقع فعلي.
+
+## الصوت
+المعتمد صوت ذكر فقط: ElevenLabs (Abu Fahad) بمعرّفه في `.env`، والاحتياطي المجاني ar-SA-HamedNeural.

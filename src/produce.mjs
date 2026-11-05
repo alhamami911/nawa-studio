@@ -1,5 +1,5 @@
 // استوديو نوى: ينتج حلقة تعليمية كاملة (تسجيل + كاميرا زوم + صوت + موسيقى + هوية + ترجمة)
-// الاستعمال: node src/produce.mjs 01-platform-tour [--voice=ar-SA-HamedNeural] [--remix]
+// الاستعمال: node src/produce.mjs 01-platform-tour [--voice=eleven|ar-SA-HamedNeural] [--voice-id=<id>] [--suffix=v2] [--remix]
 // الفكرة: التسجيل بدقة 2560×1440 (زوم صفحة 1.333 فتبقى المقاسات كما في 1920×1080)،
 // والزوم يُنفَّذ في المونتاج ككاميرا سلسة (منحنى تسارع) فيبقى حادًّا وغير متقطع.
 import { chromium } from "playwright";
@@ -17,15 +17,36 @@ const env = Object.fromEntries(readFileSync(".env", "utf8").split(/\r?\n/).filte
 const BASE = new URL(env.NAWA_BASE_URL).origin;
 const { meta, steps } = await import(pathToFileURL(`src/episodes/${epId}.mjs`).href);
 const work = `work/${epId}`; mkdirSync(work + "/voice", { recursive: true }); mkdirSync(work + "/cap", { recursive: true }); mkdirSync("out", { recursive: true });
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first"); // بعض الشبكات (DNS64) تعطي عنوان IPv6 لا يستجيب فيفشل Node دون curl
+try { process.loadEnvFile(); } catch {}
+const EL_KEY = process.env.ELEVENLABS_API_KEY, EL_VOICE = (process.argv.find(a => a.startsWith("--voice-id=")) ?? "").slice(11) || process.env.ELEVENLABS_VOICE_ID;
+const SUFFIX = (process.argv.find(a => a.startsWith("--suffix=")) ?? "").slice(9); // مثال: --suffix=v2 يكتب out/nawa-<id>-v2.mp4
+const wantEleven = !!(EL_KEY && EL_VOICE) && (!process.argv.some(a => a.startsWith("--voice=")) || process.argv.includes("--voice=eleven"));
+async function elevenTTS(text, file) {
+  const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(EL_VOICE) + "?output_format=mp3_44100_128", {
+    method: "POST", headers: { "xi-api-key": EL_KEY, "content-type": "application/json" },
+    body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.8 } }) });
+  if (!r.ok) throw new Error("ElevenLabs " + r.status + " " + (await r.text()).slice(0, 200).split(EL_KEY).join("***"));
+  writeFileSync(file, Buffer.from(await r.arrayBuffer()));
+}
 const run = (cmd, args) => { const r = spawnSync(cmd, args, { encoding: "utf8", maxBuffer: 1 << 28 }); if (r.status !== 0) throw new Error(cmd + " failed: " + (r.stderr || r.stdout).slice(0, 800)); return r.stdout; };
 const dur = f => parseFloat(run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f]));
 const q = t => Math.round(t * FPS) / FPS;
 const newest = d => readdirSync(d).filter(f => f.endsWith(".webm")).map(f => [f, statSync(`${d}/${f}`).mtimeMs]).sort((a, b) => b[1] - a[1])[0][0];
 
-// 1) الصوت: Microsoft Edge TTS (مجاني) مع ذاكرة مؤقتة
+// 1) الصوت: ElevenLabs إن وُجد المفتاح ومعرّف الصوت في .env (الافتراضي)، وإلا Edge TTS المجاني؛ مع ذاكرة مؤقتة
 for (const s of steps) {
-  const key = createHash("md5").update(voice + rate + s.speech).digest("hex").slice(0, 10);
+  let useEleven = wantEleven;
+  const key = createHash("md5").update((useEleven ? "el:" + EL_VOICE : voice + rate) + s.speech).digest("hex").slice(0, 10);
   s.audio = `${work}/voice/${s.id}-${key}.mp3`;
+  if (!existsSync(s.audio) && useEleven) {
+    // لا تحويل صامت للصوت المجاني: خلط صوتين في فيديو واحد غير مقبول. نعيد المحاولة ثم نتوقف بخطأ واضح (استعمل --voice=ar-SA-HamedNeural لاختيار المجاني صراحةً)
+    let err;
+    for (let k = 0; k < 4; k++) { try { await elevenTTS(s.speech, s.audio); err = null; break; } catch (e) { err = e; await new Promise(r => setTimeout(r, 2500 * (k + 1))); } }
+    if (err) throw new Error("ElevenLabs غير متاح (" + (err.cause?.code || err.message) + "). لم يُنتَج شيء. أعد المحاولة لاحقًا أو استعمل --voice=ar-SA-HamedNeural");
+    console.log("tts(eleven)", s.id);
+  }
   if (!existsSync(s.audio)) { run("python", ["-m", "edge_tts", "--voice", voice, `--rate=${rate}`, "--text", s.speech, "--write-media", s.audio]); console.log("tts", s.id); }
   s.dur = dur(s.audio);
 }
@@ -195,16 +216,18 @@ chunks.forEach((c, i) => {
   last = `ov${i}`;
 });
 fc += `;[${last}]null[vfinal]`;
-fc += `;${timeline.map((t, i) => `[${i + 1}:a]adelay=${Math.round((t.t + 0.1) * 1000)}|${Math.round((t.t + 0.1) * 1000)},apad[a${i}]`).join(";")}`;
+// تحسين الصوت: لا يغيّر التوقيت إطلاقًا. فلتر صدى/همس خفيف، قصّ الطنين، تنقية خفيفة، موازنة دفء ووضوح، تخفيف حدّة السين، ضغط لطيف، وتوحيد مستوى كل مقطع
+const VOICE_FX = "highpass=f=75,afftdn=nr=6:nf=-50,equalizer=f=220:t=q:w=1:g=-1.5,equalizer=f=3200:t=q:w=1:g=1.5,deesser=i=0.3:m=0.5:f=0.5,acompressor=threshold=0.125:ratio=2.5:attack=15:release=160:makeup=1.5,loudnorm=I=-18:TP=-2:LRA=7,alimiter=limit=0.95";
+fc += `;${timeline.map((t, i) => `[${i + 1}:a]${VOICE_FX},adelay=${Math.round((t.t + 0.1) * 1000)}|${Math.round((t.t + 0.1) * 1000)},apad[a${i}]`).join(";")}`;
 fc += `;${timeline.map((_, i) => `[a${i}]`).join("")}amix=inputs=${n}:normalize=0:duration=longest,atrim=0:${total.toFixed(2)},asplit=2[vo1][vo2]`;
 fc += `;[${mi}:a]volume=0.55,afade=t=in:d=2.5,afade=t=out:st=${(total - 3.5).toFixed(2)}:d=3.5,atrim=0:${total.toFixed(2)}[m]`;
 fc += `;[m][vo2]sidechaincompress=threshold=0.015:ratio=12:attack=30:release=800[md]`;
 fc += `;[vo1][md]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[aout]`;
 writeFileSync(`${work}/filter.txt`, fc);
-const outMp4 = `out/nawa-${epId}.mp4`;
+const outMp4 = `out/nawa-${epId}${SUFFIX ? "-" + SUFFIX : ""}.mp4`;
 run("ffmpeg", ["-loglevel", "error", "-y", ...inputs, "-/filter_complex", `${work}/filter.txt`, "-map", "[vfinal]", "-map", "[aout]", "-t", total.toFixed(2),
   "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", "-r", String(FPS), "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", outMp4]);
 // ترجمة SRT
 const ts = x => { const ms = Math.round(x * 1000), pad = (v, l = 2) => String(v).padStart(l, "0"); return `${pad(Math.floor(ms / 3600000))}:${pad(Math.floor(ms / 60000) % 60)}:${pad(Math.floor(ms / 1000) % 60)},${pad(ms % 1000, 3)}`; };
-writeFileSync(`out/nawa-${epId}.srt`, timeline.filter(t => !t.card).map((t, i) => `${i + 1}\n${ts(t.t + 0.1)} --> ${ts(t.t + 0.1 + t.dur)}\n${t.text}\n`).join("\n"));
+writeFileSync(outMp4.replace(/.mp4$/, ".srt"), timeline.filter(t => !t.card).map((t, i) => `${i + 1}\n${ts(t.t + 0.1)} --> ${ts(t.t + 0.1 + t.dur)}\n${t.text}\n`).join("\n"));
 console.log("done", outMp4, total.toFixed(1) + "s", `(${K} camera segments, ${chunks.length} captions)`);
