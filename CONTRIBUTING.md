@@ -54,6 +54,10 @@ Silent fallback to a free voice produced the wrong voice on one episode.
 4. Review frames from the video; a successful run alone does not prove the result looks right.
 5. Do not commit videos. Share them through the dashboard or a release.
 
+## License
+
+By contributing you agree that your contribution is released under the [MIT License](LICENSE).
+
 ## Reporting bugs and ideas
 
 Open a GitHub issue using the templates. For security problems, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.

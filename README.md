@@ -104,4 +104,6 @@ The product, its audience and the video content are Arabic, so episode scripts a
 
 ## License
 
-No license has been chosen yet, so all rights are reserved by the repository owner. Open an issue if you want to use or redistribute any part of this project.
+The source code is released under the [MIT License](LICENSE).
+
+The Nawa name, logo, icons and other brand assets in `assets/brand/` and `assets/screens/` belong to Nawa and are **not** covered by the MIT license; they may only be used to produce Nawa content.

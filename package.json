@@ -12,7 +12,7 @@
     "share": "node src/share.mjs",
     "check": "node scripts/check.mjs"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "playwright": "^1.64.1"
