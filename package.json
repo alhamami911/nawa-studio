@@ -1,7 +1,7 @@
 {
   "name": "nawa-tutorial-builder",
   "version": "1.0.0",
-  "description": "إنتاج فيديوهات تعليمية عربية لمنصة نوى (تسجيل + تكبير سينمائي + صوت + موسيقى + هوية)",
+  "description": "Automated pipeline for Arabic tutorial videos of the Nawa platform (recording, cinematic camera, voice-over, music, branding)",
   "scripts": {
     "brand": "node src/fetch-brand.mjs",
     "music": "node src/make-music.mjs",

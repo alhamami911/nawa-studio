@@ -1,4 +1,4 @@
-// npm run check: فحص صياغة كل ملفات المصدر (بلا تشغيل ولا شبكة)
+// npm run check: syntax-check every source file (no execution, no network)
 import { readdirSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";

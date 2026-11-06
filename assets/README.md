@@ -1,19 +1,21 @@
-# الأصول (Assets)
+# Assets
 
-| المجلد | المحتوى | المصدر |
+| Folder | Contents | Source |
 |---|---|---|
-| `brand/` | الشعار وأيقونات الموقع وصورة المشاركة وملف الألوان الخام | `node src/fetch-brand.mjs` (من nawamusic.com) |
-| `music/` | موسيقى خلفية أصلية (240 ثانية، بلا حقوق نشر) | `node src/make-music.mjs` |
-| `screens/public/` | لقطات الصفحات العامة وتسجيل الدخول | `node src/screenshots.mjs` |
-| `screens/app/` | الأدوات (تيونر، مترونوم، محاكي) وصفحة درس | `node src/screenshots.mjs` |
-| `screens/admin/` | لوحة الإدارة. **محلية فقط ولا تُرفع** (مأخوذة من موقع فعلي) | `node src/screenshots.mjs` |
+| `brand/` | Logo, site icons, share image and the raw color file | `node src/fetch-brand.mjs` (from nawamusic.com) |
+| `music/` | Original background music (240 s, royalty-free) | `node src/make-music.mjs` |
+| `screens/public/` | Screenshots of public pages and sign-in | `node src/screenshots.mjs` |
+| `screens/app/` | Tools (tuner, metronome, simulator) and a lesson page | `node src/screenshots.mjs` |
+| `screens/admin/` | Admin panel. **Local only, never committed** (taken from the live site) | `node src/screenshots.mjs` |
 
-فهرس اللقطات: [screens/INDEX.md](screens/INDEX.md).
+Screenshot index: [screens/INDEX.md](screens/INDEX.md).
 
-## الهوية
-برتقالي `#c34d04` · توهّج `#ff8a1f` · نص `#342616` · خلفية `#f9f8fc` · الخط IBM Plex Sans Arabic.
+## Brand
 
-## ملاحظات
-- الشعار والأيقونات ملك نوى وتُستخدم لإنتاج محتواها فقط.
-- لا تُسجَّل صفحات فيها بيانات أشخاص (طلاب، معلمون، مدفوعات، بريد).
-- الصوت يُولَّد وقت الإنتاج في `work/` ولا يُحفظ هنا.
+Orange `#c34d04` · glow `#ff8a1f` · text `#342616` · background `#f9f8fc` · font IBM Plex Sans Arabic.
+
+## Notes
+
+- The logo and icons belong to Nawa and are used only to produce Nawa content.
+- Never record pages that show personal data (students, teachers, payments, email).
+- Voice clips are generated at production time in `work/` and are not stored here.

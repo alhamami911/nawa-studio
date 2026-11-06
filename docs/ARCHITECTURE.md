@@ -1,33 +1,41 @@
-# البنية
+# Architecture
 
 ```
-data/series.json        خطة السلاسل والحلقات (مصدر اللوحة)
-src/episodes/*.mjs      سيناريو كل حلقة: meta + steps (speech/text/pre/post)
-src/produce.mjs         المحرك: صوت → تسجيل → كاميرا → شرح مكتوب → مونتاج
-src/overlay.js          طبقة داخل الصفحة: مؤشر، إطار مضيء، ستارة انتقال، بطاقات
-src/dashboard.mjs       لوحة الإنتاج (خادم بلا مكتبات) + dashboard-page.mjs
-src/share.mjs           لوحة + نفق Cloudflare
-src/screenshots.mjs     لقطات الصفحات
-src/fetch-brand.mjs     هوية الموقع    src/make-music.mjs  موسيقى الخلفية
-assets/                 brand، music، screens (admin محلي فقط)
-out/  work/             ناتج وتخزين مؤقت (خارج git)
+data/series.json        Series and episode plan (source of truth for the dashboard)
+src/episodes/*.mjs      One script per episode: meta + steps (speech / text / pre / post)
+src/produce.mjs         The engine: voice → recording → camera → captions → mix
+src/overlay.js          In-page layer: cursor, glowing frame, transition curtain, cards
+src/dashboard.mjs       Production dashboard (dependency-free server) + dashboard-page.mjs
+src/share.mjs           Dashboard + Cloudflare tunnel
+src/screenshots.mjs     Page screenshots
+src/fetch-brand.mjs     Fetch site branding        src/make-music.mjs   Background music
+assets/                 brand, music, screens (admin screenshots are local only)
+out/  work/             Output and scratch space (git-ignored)
 ```
 
-## مسار الإنتاج
-1. **الصوت:** ElevenLabs (الافتراضي إن وُجد المفتاح) وإلا Edge TTS؛ ذاكرة مؤقتة بمفتاح md5 في `work/<ep>/voice`. لا تحويل صامت بين المزوّدين.
-2. **التسجيل:** Playwright بدقة 2560×1440 مع زوم صفحة 1.333. الدخول خارج التسجيل (`storageState`) فلا تظهر البيانات. تُسجَّل مفاتيح الكاميرا `{t,z,cx,cy}` مع التسجيل.
-3. **الكاميرا:** ffmpeg: قطع ثابتة (crop+scale) وقطع حركة (zoompan بمنحنى smootherstep)، ثم concat.
-4. **الشرح المكتوب:** صور شفافة لكل جملة تُركَّب فوق الفيديو، مستقلة عن حركة الكاميرا.
-5. **الصوت النهائي:** سلسلة تحسين لكل مقطع (لا تغيّر التوقيت)، موسيقى مع خفض تلقائي أثناء الكلام، `loudnorm`.
+## Production pipeline
 
-## اللوحة والأمان
-- محلية افتراضيًا (127.0.0.1). الطلب يُعدّ خارجيًا إن وصل بترويسات `cf-connecting-ip`/`x-forwarded-for` أو بـ Host غير محلي، لأن النفق يصل من 127.0.0.1.
-- خارجيًا: كلمة مرور إلزامية ما لم يُفعَّل `DASHBOARD_PUBLIC=1` (عرض فقط). التحكم عن بعد لا يُفتح بكلمة مرور أقصر من 10 أحرف.
-- لقطات الإدارة وسجلات المهام لا تُخدَم خارجيًا.
+1. **Voice.** ElevenLabs is the default when a key is present, otherwise Edge TTS. Clips are cached by an md5 key in `work/<ep>/voice`. There is deliberately no silent fallback between providers: ElevenLabs is retried four times and then the run fails.
+2. **Recording.** Playwright at 2560×1440 with page zoom 1.3333 (a 1920×1080 layout). Login happens before recording (`storageState`) so account data never appears on screen. Camera keyframes `{t, z, cx, cy}` are logged during the recording.
+3. **Camera.** ffmpeg: static segments (crop + scale) and move segments (`zoompan` with a smootherstep curve, 1.0 s per move, 30 fps), then concatenated.
+4. **Captions.** One transparent PNG per sentence, overlaid on the video independently of camera motion. Text is HTML-escaped before rendering.
+5. **Final audio.** A per-clip enhancement chain that does not change timing, music with sidechain ducking while speech plays, then `loudnorm`.
 
-## قيود معروفة
-- المحرك ملف واحد (~230 سطرًا) بحالة عامة؛ تقسيمه إلى وحدات (صوت، تسجيل، مونتاج) مناسب إذا نمت الحلقات.
-- عنوان الموقع وحقول تسجيل الدخول ثابتة لنوى. دعم منصات متعددة يحتاج ملف `platform.json` لكل منصة.
-- لا اختبارات آلية؛ التحقق يدوي بمراجعة إطارات من الفيديو.
-- أي تعديل على الموقع الحي قد يكسر محدّدات (selectors) السيناريوهات.
-- `work/<ep>/meta.json` واحد لكل حلقة، فإعادة المونتاج بعد إنتاج نسخة بصوت آخر تستعمل توقيت آخر نسخة.
+Outputs: `out/nawa-<episode>[-suffix].mp4` and a matching `.srt`. Timing metadata is stored in `work/<episode>/meta.json`.
+
+## Dashboard and security
+
+- Local by default (`127.0.0.1`). A request counts as remote if it carries `cf-connecting-ip` / `x-forwarded-for` / `cf-ray` headers or a non-local `Host`, because a tunnel reaches the server from `127.0.0.1`.
+- Remote requests need a password unless `DASHBOARD_PUBLIC=1` (read-only). Remote control (starting production) is only enabled with a password of 10+ characters or `DASHBOARD_ALLOW_WEAK=1`.
+- Sessions use an `nsess` cookie; failed logins are rate-limited and locked out; session and failure tables are pruned periodically.
+- Admin screenshots and job logs are never served to remote clients.
+- Responses carry basic security headers.
+
+## Known limitations
+
+- `produce.mjs` is a single file (about 230 lines) with module-level state. Splitting it into voice, recording and mixing modules is worthwhile as episodes grow.
+- The target site URL and login fields are hard-coded for Nawa. Supporting several platforms would need a per-platform config file.
+- No automated tests. Verification is manual, by reviewing frames from the video. Pure helpers (timeline, caption escaping, SRT writing) are good candidates for the first tests.
+- Any change to the live site can break an episode's selectors.
+- One `meta.json` per episode: re-mixing after producing a variant with a different voice reuses the timing of the latest run.
+- Cloudflare quick tunnels give a temporary URL that only works while `npm run share` is running.

@@ -1,5 +1,5 @@
-// لوحة إنتاج نوى: npm run dashboard  ثم افتح http://127.0.0.1:4174
-// خادم محلي بلا مكتبات (على نفس فكرة لوحة JAWAB Studio). الحالة من ملفات المشروع نفسها: data/series.json وsrc/episodes وout وwork.
+// Nawa production dashboard: npm run dashboard, then open http://127.0.0.1:4174
+// Dependency-free local server. State is derived from project files: data/series.json, src/episodes, out and work.
 import { createServer } from "node:http";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
