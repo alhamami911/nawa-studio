@@ -13,6 +13,8 @@ npm install
 npx playwright install chromium
 pip install edge-tts
 cp .env.example .env
+npm run brand      # fetch logo and colors
+npm run music      # generate background music (needed by the engine)
 ```
 
 Fill in `.env` on your own machine only (see the table in [README.md](README.md#configuration)). Use a dedicated recording account with limited permissions, never an admin account that holds real data.

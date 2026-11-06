@@ -36,6 +36,8 @@ npm install
 npx playwright install chromium
 pip install edge-tts
 cp .env.example .env      # then fill in the values (see Configuration)
+npm run brand             # fetch logo and colors from the site into assets/brand
+npm run music             # generate the background music into assets/music
 npm run check             # syntax check of all sources
 ```
 
@@ -90,8 +92,8 @@ Remote visitors are read-only unless a strong password is set. Admin screenshots
 | `src/share.mjs` | Dashboard + Cloudflare tunnel |
 | `src/screenshots.mjs`, `src/fetch-brand.mjs`, `src/make-music.mjs`, `src/make-pdf.mjs` | Asset tooling |
 | `data/series.json` | The series and episode plan (drives the dashboard) |
-| `assets/` | Brand, music, screenshots (admin screenshots stay local) |
-| `docs/` | Architecture notes and the approved series plan |
+| `assets/` | Brand files (committed); music and screenshots are generated locally and git-ignored |
+| `docs/` | Architecture notes and the series plan (`series-plan.html`; `npm run pdf` renders the PDF) |
 | `scripts/check.mjs` | Syntax check used by `npm run check` and CI |
 
 ## Contributing
@@ -106,4 +108,4 @@ The product, its audience and the video content are Arabic, so episode scripts a
 
 The source code is released under the [MIT License](LICENSE).
 
-The Nawa name, logo, icons and other brand assets in `assets/brand/` and `assets/screens/` belong to Nawa and are **not** covered by the MIT license; they may only be used to produce Nawa content.
+The Nawa name, logo, icons and other brand assets in `assets/brand/` belong to Nawa and are **not** covered by the MIT license; they may only be used to produce Nawa content.

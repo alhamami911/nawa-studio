@@ -1,14 +1,10 @@
 # Assets
 
-| Folder | Contents | Source |
+| Folder | Contents | How to get it |
 |---|---|---|
-| `brand/` | Logo, site icons, share image and the raw color file | `node src/fetch-brand.mjs` (from nawamusic.com) |
-| `music/` | Original background music (240 s, royalty-free) | `node src/make-music.mjs` |
-| `screens/public/` | Screenshots of public pages and sign-in | `node src/screenshots.mjs` |
-| `screens/app/` | Tools (tuner, metronome, simulator) and a lesson page | `node src/screenshots.mjs` |
-| `screens/admin/` | Admin panel. **Local only, never committed** (taken from the live site) | `node src/screenshots.mjs` |
-
-Screenshot index: [screens/INDEX.md](screens/INDEX.md).
+| `brand/` | Logo, site icons, share image and the raw color file (committed) | `npm run brand` (from nawamusic.com) |
+| `music/` | Original background music, 240 s, royalty-free. **Git-ignored, required by the engine** | `npm run music` |
+| `screens/` | Page screenshots for reference. **Git-ignored**; the `admin/` subfolder comes from the live site and must never be shared | `npm run screens` |
 
 ## Brand
 

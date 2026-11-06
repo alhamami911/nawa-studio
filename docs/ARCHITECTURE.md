@@ -9,7 +9,7 @@ src/dashboard.mjs       Production dashboard (dependency-free server) + dashboar
 src/share.mjs           Dashboard + Cloudflare tunnel
 src/screenshots.mjs     Page screenshots
 src/fetch-brand.mjs     Fetch site branding        src/make-music.mjs   Background music
-assets/                 brand, music, screens (admin screenshots are local only)
+assets/                 brand (committed); music, screens (generated locally, git-ignored)
 out/  work/             Output and scratch space (git-ignored)
 ```
 

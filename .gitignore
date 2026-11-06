@@ -1,17 +1,19 @@
-# أسرار
+# Secrets
 .env
 .env.*
 !.env.example
 
-# ناتج وتبعيات
+# Output and dependencies
 node_modules/
 work/
 out/
 
-# لقطات لوحة الإدارة من موقع فعلي: محلية فقط (أزل السطر لرفعها)
-assets/screens/admin/
+# Generated locally (rebuild with: npm run music / npm run screens / npm run pdf)
+assets/music/
+assets/screens/
+docs/*.pdf
 
-# نظام
+# OS and logs
 .DS_Store
 Thumbs.db
 *.log
